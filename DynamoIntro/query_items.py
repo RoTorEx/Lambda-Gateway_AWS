@@ -1,8 +1,10 @@
 import boto3
 from boto3.dynamodb.conditions import Key
+from set_env import AWS_CREDS
+
 
 # boto3 is the AWS SDK library for Python.
-dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1', **AWS_CREDS)
 table = dynamodb.Table('Books')
 
 # When making a Query API call, we use the KeyConditionExpression parameter to specify
