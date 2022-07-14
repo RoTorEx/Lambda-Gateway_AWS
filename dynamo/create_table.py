@@ -1,8 +1,10 @@
 import boto3
+from set_env import AWS_CREDS
+
 
 # boto3 is the AWS SDK library for Python.
 # We can use the low-level client to make API calls to DynamoDB.
-client = boto3.client('dynamodb', region_name='us-east-1')
+client = boto3.client('dynamodb', region_name='us-east-1', **AWS_CREDS)
 
 try:
     resp = client.create_table(
