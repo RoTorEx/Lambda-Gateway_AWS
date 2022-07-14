@@ -1,2 +1,5 @@
+*.ini
+*.lock
+
 **/.DS_Store
 **/.__pycache__
