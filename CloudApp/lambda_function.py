@@ -3,7 +3,7 @@ import logging
 
 import boto3
 
-from set_env import AWS_CREDS, AWS_VARS
+from set_env import AWS_CREDS, AWS_VARS  # Delete from AWS Lambda
 from custom_encoder import CustomEncoder
 
 
@@ -11,12 +11,13 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 dynamodbTableName = "product-inventory"
-dynamodb = boto3.resource("dynamodb", region_name='us-east-1', **AWS_CREDS)
+dynamodb = boto3.resource("dynamodb", region_name='us-east-1', **AWS_CREDS)  # Delete from AWS Lambda
+# dynamodb = boto3.resource("dynamodb")  # Put that code to AWS Lambda
 table = dynamodb.Table(dynamodbTableName)
 
 getMethod = "GET"
 postMethod = "POST"
-putchMethod = "PUTCH"
+patchMethod = "PATCH"
 deleteMethod = "DELETE"
 
 healthPath = "/health"
@@ -25,12 +26,7 @@ productsPath = "/products"
 
 
 def lambda_handler(event, context):
-    # TODO implement
-    # return {
-    #     'statusCode': 200,
-    #     'body': json.dumps('Hello from Lambda!')
-    # }
-
+    # Implement of CRUD methods
     logger.info(event)
     httpMethod = event["httpMethod"]
     path = event["path"]
@@ -38,17 +34,13 @@ def lambda_handler(event, context):
     if httpMethod == getMethod and path == healthPath:
         response = buildResponse(200)
 
-
     elif httpMethod == getMethod and path == productPath:
         response = getProduct(event["queryStringParameters"]["productId"])
-
-    elif httpMethod == getMethod and path == productsPath:
-        response = getProducts()
 
     elif httpMethod == postMethod and path == productPath:
         response = saveProduct(json.loads(event["body"]))
 
-    elif httpMethod == putchMethod and path == productPath:
+    elif httpMethod == patchMethod and path == productPath:
         requestBody = json.loads(event["body"])
         response = modifyProduct(requestBody["productId"], requestBody["updateKey"], requestBody["updateValue"])
 
@@ -56,13 +48,17 @@ def lambda_handler(event, context):
         requestBody = json.loads(event["body"])
         response = deleteProduct(requestBody["productId"])
 
+    elif httpMethod == getMethod and path == productsPath:
+        response = getProducts()
+
     else:
-        response = buildResponse(404, "Not Found\n:'(")
+        response = buildResponse(404, "Not Found :'(")
 
     return response
 
 
 def buildResponse(statusCode, body=None):
+    # Create responses function
     response = {
         "statusCode": statusCode,
         "headers": {
@@ -70,6 +66,7 @@ def buildResponse(statusCode, body=None):
             "Access-Control-Allow-Origin": "*"
         }
     }
+
     if body is not None:
         response["body"] = json.dumps(body, cls=CustomEncoder)
 
@@ -81,20 +78,20 @@ def getProduct(productId):
     try:
         response = table.get_item(
             Key={
-                "produtId": productId
+                "productId": productId
             }
         )
 
-        if "item" in response:
+        if "Item" in response:
             return buildResponse(200, response["Item"])
         else:
-            return buildResponse(404, {"Message": "ProductId %s not found" % productId})
+            return buildResponse(404, {"Message": f"ProductId ({productId}) not found"})
 
     except:
         logger.exception("Do your custom error here. I am just gonna log it out here!")
 
 
-def getProducts(productId):
+def getProducts():
     # GET - http://.../products
     try:
         response = table.scan()
@@ -130,7 +127,7 @@ def saveProduct(requestsBody):
 
 
 def modifyProduct(productId, updateKey, updateValue):
-    # PUTCH - http://.../product
+    # PATCH - http://.../product
     try:
         response = table.update_item(
             Key={
